@@ -1,0 +1,10 @@
+build/
+results/*.csv
+results/*.png
+.DS_Store
+*.o
+*.out
+compile_commands.json
+.cache/
+__pycache__/
+.venv/
