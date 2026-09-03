@@ -21,17 +21,20 @@ density grows.
 
 ## Build
 
+Requires a C++17 compiler. No external dependencies.
+
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+make            # release build
+make debug      # -O0 -g with address and UB sanitizers
+make clean
 ```
 
 ## Run
 
 ```bash
-./build/v2xsim --ues 50 --duration 10000
-./build/v2xsim --ues 50 --sensing            # sensing-based selection
-./build/v2xsim --ues 50 --sensing --sps      # with SPS
+./v2xsim --ues 50 --duration 10000
+./v2xsim --ues 50 --sensing            # sensing-based selection
+./v2xsim --ues 50 --sensing --sps      # with SPS
 ```
 
 Sweep UE density and plot:

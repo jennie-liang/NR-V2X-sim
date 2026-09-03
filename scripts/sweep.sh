@@ -2,7 +2,7 @@
 # Sweep UE density with sensing on and off, then plot.
 set -euo pipefail
 
-BIN=build/v2xsim
+BIN=./v2xsim
 OUT=results/sweep.csv
 
 rm -f "$OUT"
