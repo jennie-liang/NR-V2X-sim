@@ -1,36 +1,42 @@
 #!/usr/bin/env python3
-"""Plot simulation results.
+"""Plot simulation results, averaging over seeds.
 
 Usage:
-    python3 scripts/plot.py results/run.csv
+    python3 scripts/plot.py results/sweep.csv
 """
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def panel(ax, df, column, ylabel, title):
+    for sensing, group in df.groupby("sensing"):
+        stats = (group.groupby("num_ues")[column]
+                      .mean()
+                      .reset_index()
+                      .sort_values("num_ues"))
+
+        label = "sensing" if sensing else "random"
+        ax.plot(stats["num_ues"], stats[column] * 100, marker="o", label=label)
+
+    ax.set_xlabel("Number of UEs")
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.grid(alpha=0.3)
+    ax.legend()
+
+
 def main(path: str) -> None:
     df = pd.read_csv(path)
 
+    seeds = df["seed"].nunique() if "seed" in df.columns else 1
+    print(f"{len(df)} runs, {seeds} seed(s) per point")
+
     fig, axes = plt.subplots(1, 2, figsize=(11, 4))
-
-    for sensing, group in df.groupby("sensing"):
-        label = "sensing on" if sensing else "sensing off"
-        g = group.sort_values("num_ues")
-        axes[0].plot(g["num_ues"], g["collision_rate"] * 100, marker="o", label=label)
-        axes[1].plot(g["num_ues"], g["prr"] * 100, marker="o", label=label)
-
-    axes[0].set_xlabel("Number of UEs")
-    axes[0].set_ylabel("Collision rate (%)")
-    axes[0].set_title("Collision rate vs UE density")
-    axes[0].grid(alpha=0.3)
-    axes[0].legend()
-
-    axes[1].set_xlabel("Number of UEs")
-    axes[1].set_ylabel("PRR (%)")
-    axes[1].set_title("Packet reception ratio vs UE density")
-    axes[1].grid(alpha=0.3)
-    axes[1].legend()
+    panel(axes[0], df, "collision_rate", "Collision rate (%)",
+          "Collision rate vs UE density")
+    panel(axes[1], df, "prr", "PRR (%)",
+          "Packet reception ratio vs UE density")
 
     fig.tight_layout()
     out = path.rsplit(".", 1)[0] + ".png"

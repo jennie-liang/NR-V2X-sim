@@ -153,12 +153,13 @@ void Simulator::writeCsv(const std::string& path) const {
     }
 
     if (need_header) {
-        out << "num_ues,duration_ms,sensing,sps,packet_period_ms,"
+        out << "num_ues,duration_ms,seed,sensing,sps,packet_period_ms,"
                "transmissions,collisions,collision_rate,prr\n";
     }
 
     out << cfg_.num_ues << ','
         << cfg_.sim_duration_ms << ','
+        << cfg_.seed << ','
         << (cfg_.enable_sensing ? 1 : 0) << ','
         << (cfg_.enable_sps ? 1 : 0) << ','
         << cfg_.packet_period_ms << ','
