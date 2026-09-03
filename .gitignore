@@ -1,4 +1,5 @@
 build/
+v2xsim
 results/*.csv
 results/*.png
 .DS_Store

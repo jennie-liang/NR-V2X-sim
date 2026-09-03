@@ -15,7 +15,7 @@ struct Config {
     int    num_ues              = 50;
     int    sim_duration_ms      = 10000;  // 10 s
     double road_length_m        = 2000.0;
-    unsigned seed               = 42;
+    unsigned seed               = 70;
 
     // ---- Traffic (CAM / BSM style periodic broadcast) ----
     double packet_period_ms     = 100.0;

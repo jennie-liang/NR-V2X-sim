@@ -8,9 +8,8 @@ double pathlossDb(double distance_m, const Config& cfg) {
     // TODO(v0.1)
     // PL = reference_loss_db + 10 * pathloss_exponent * log10(d)
     // Clamp d to at least 1.0 m.
-    (void)distance_m;
-    (void)cfg;
-    return 0.0;
+    double PL = cfg.reference_loss_db + 10 * cfg.pathloss_exponent * log10(std::max(distance_m, 1.0));
+    return PL;
 }
 
 double rxPowerDbm(double tx_power_dbm, double distance_m, const Config& cfg) {

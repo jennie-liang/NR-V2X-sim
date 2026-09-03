@@ -55,18 +55,28 @@ void Simulator::stepSlot(int slot) {
     //
     // 4. Update metrics_.
 
-    (void)slot;
+    //Move UE
+    for(auto &ue: ues_)
+        ue.move(1, cfg_.road_length_m);
+
+    //UE packet check and send
+    for(auto &ue: ues_){
+        if(ue.hasPacketAt(slot, cfg_)){
+            Resource r = ue.selectResource(slot, pool_, cfg_, rng_);
+            if(r.valid())
+            tx_history_[r.slot].push_back(Transmission{ue.id(), r, ue.position(), cfg_.tx_power_dbm});
+        }
+    }
+
+    //detect collision in this slot
+    detectCollisions(tx_history_[slot]);
+
+    //metrics update
+    
 }
 
 void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
-    // TODO(v0.1)
-    //
-    // Simple version: for each pair (i, j), if txs[i].resource.overlaps(
-    // txs[j].resource) then both are collided. Count each collided TX once.
-    //
-    // O(n^2) is fine here — n is the number of TX in one slot, usually small.
-    //
-    // TODO(v0.5): replace with SINR-based reception.
+    // TODO(v0.1) SINR-based reception.
     //   For each TX and each potential receiver within comm_range_m:
     //     signal = Channel::rxPowerDbm(tx.tx_power_dbm, dist, cfg_)
     //     interference = sum over all OTHER overlapping TX of their rx power
@@ -74,7 +84,57 @@ void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
     //     sinr = signal - mwToDbm(interference_mw + noise_mw)
     //     rx_success += (sinr > cfg_.sinr_threshold_db)
 
-    (void)txs;
+    if(txs.size()==0) return;
+
+    double signal, interference, sinr;
+    int collision = 0;
+    int opportunity = 0;
+    int rx_success = 0;
+
+    // number of collision
+    for(int i=0; i<int(txs.size())-1; i++){
+        for(int j=i+1; j<int(txs.size()); j++){
+            if(txs[i].resource.overlaps(txs[j].resource)){
+                collision ++;
+            }
+        }
+    }
+
+    metrics_.total_transmissions += txs.size();
+    metrics_.collisions += collision;
+
+    // PRR
+    for(auto &ue: ues_){
+        
+
+        for(auto &tx: txs){
+            interference = 0.0;
+            signal = Channel::rxPowerDbm(tx.tx_power_dbm, std::abs(tx.tx_pos_m - ue.position()), cfg_);
+            
+            if(tx.ue_id == ue.id()) continue;
+            if(std::abs(tx.tx_pos_m - ue.position()) > cfg_.comm_range_m) continue;
+            
+            opportunity ++;
+                
+            for(auto &overlap_tx: txs){
+                if(overlap_tx.ue_id == ue.id() || overlap_tx.ue_id == tx.ue_id) continue;
+                if(std::abs(overlap_tx.tx_pos_m - ue.position()) > cfg_.comm_range_m) continue;
+                
+                if(tx.resource.overlaps(overlap_tx.resource)){
+                    interference += Channel::dbmToMw(Channel::rxPowerDbm(overlap_tx.tx_power_dbm, std::abs(overlap_tx.tx_pos_m - ue.position()), cfg_));
+                }
+                
+            }
+
+            sinr = signal - Channel::mwToDbm(interference + Channel::dbmToMw(cfg_.noise_floor_dbm));
+            rx_success += (sinr > cfg_.sinr_threshold_db);
+
+        }
+    }
+
+
+    metrics_.rx_opportunities += opportunity;
+    metrics_.rx_success += rx_success;
 }
 
 void Simulator::writeCsv(const std::string& path) const {
