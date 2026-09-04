@@ -64,15 +64,13 @@ void Simulator::stepSlot(int slot) {
         if(ue.hasPacketAt(slot, cfg_)){
             Resource r = ue.selectResource(slot, pool_, cfg_, rng_);
             if(r.valid())
-            tx_history_[r.slot].push_back(Transmission{ue.id(), r, ue.position(), cfg_.tx_power_dbm});
+            tx_history_[r.slot].push_back(Transmission{ue.id(), r, ue.position(), cfg_.tx_power_dbm, ue.reservationPeriod()});
         }
     }
 
     //detect collision in this slot
     detectCollisions(tx_history_[slot]);
-
-    //metrics update
-    
+   
 }
 
 void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
@@ -110,7 +108,7 @@ void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
         for(auto &tx: txs){
             interference = 0.0;
             signal = Channel::rxPowerDbm(tx.tx_power_dbm, std::abs(tx.tx_pos_m - ue.position()), cfg_);
-            
+
             if(tx.ue_id == ue.id()) continue;
             if(std::abs(tx.tx_pos_m - ue.position()) > cfg_.comm_range_m) continue;
             

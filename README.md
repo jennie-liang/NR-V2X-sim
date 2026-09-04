@@ -13,11 +13,17 @@ density grows.
 | Version | Feature | Done |
 |---|---|---|
 | v0.1 | Resource pool, random selection, collision detection | ☑ |
-| v0.2 | CSV output, Python plotting | ☑ |
-| v0.3 | Sensing window + TS 38.214 §8.1.4 resource selection | ☐ |
-| v0.4 | Semi-persistent scheduling (reselection counter) | ☐ |
-| v0.5 | Pathloss + SINR-based reception, PRR vs distance | ☐ |
+| v0.2 | CSV output, multi-seed sweep, plotting | ☑ |
+| v0.3 | Semi-persistent scheduling with resource reservation | ☐ |
+| v0.4 | Sensing window + TS 38.214 §8.1.4 resource selection | ☐ |
+| v0.5 | Shadow fading, PRR vs distance | ☐ |
 | v1.0 | Parameter sensitivity analysis, full README | ☐ |
+
+SPS comes before sensing deliberately. Sensing works by decoding the reservation
+period announced in another UE's SCI and avoiding the slots it implies. Without
+SPS every transmission picks a fresh random resource, so the sensing history
+carries no information about future occupancy and the algorithm has nothing to
+exclude. Predictable traffic is a precondition for sensing to help at all.
 
 ## Build
 

@@ -24,4 +24,9 @@ struct Transmission {
     Resource resource;
     double   tx_pos_m   = 0.0;
     double   tx_power_dbm = 0.0;
+
+    // Reservation period announced in the SCI, in slots. 0 means "no
+    // reservation, this is a one-shot transmission". Sensing UEs use this to
+    // predict which future slots this transmitter will occupy.
+    int      reservation_period = 0;
 };

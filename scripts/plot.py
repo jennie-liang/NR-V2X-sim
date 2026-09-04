@@ -9,15 +9,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
+def mode_label(sensing: int, sps: int) -> str:
+    if sensing:
+        return "SPS + sensing"
+    return "SPS" if sps else "random"
+
+
 def panel(ax, df, column, ylabel, title):
-    for sensing, group in df.groupby("sensing"):
+    for (sensing, sps), group in df.groupby(["sensing", "sps"]):
         stats = (group.groupby("num_ues")[column]
                       .mean()
                       .reset_index()
                       .sort_values("num_ues"))
 
-        label = "sensing" if sensing else "random"
-        ax.plot(stats["num_ues"], stats[column] * 100, marker="o", label=label)
+        ax.plot(stats["num_ues"], stats[column] * 100,
+                marker="o", label=mode_label(sensing, sps))
 
     ax.set_xlabel("Number of UEs")
     ax.set_ylabel(ylabel)
