@@ -12,8 +12,7 @@ void printUsage(const char* prog) {
               << "  --ues N            number of UEs (default 50)\n"
               << "  --duration MS      simulation duration in ms (default 10000)\n"
               << "  --period MS        packet period in ms (default 100)\n"
-              << "  --sensing          enable sensing-based selection\n"
-              << "  --sps              enable semi-persistent scheduling\n"
+              << "  --sps              enable semi-persistent scheduling and sensing-based selection\n"
               << "  --seed N           RNG seed (default 42)\n"
               << "  --out PATH         output csv (default results/run.csv)\n";
 }
@@ -39,7 +38,6 @@ int main(int argc, char** argv) {
         else if (arg == "--period")   cfg.packet_period_ms = std::atof(next("--period"));
         else if (arg == "--seed")     cfg.seed            = std::atoi(next("--seed"));
         else if (arg == "--out")      out_path            = next("--out");
-        else if (arg == "--sensing")  cfg.enable_sensing  = true;
         else if (arg == "--sps")      cfg.enable_sps      = true;
         else if (arg == "-h" || arg == "--help") { printUsage(argv[0]); return 0; }
         else {

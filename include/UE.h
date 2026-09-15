@@ -7,7 +7,7 @@
 #include "ResourcePool.h"
 
 // What a UE observed on one resource during sensing.
-// Used in v0.3 to exclude resources and rank them by RSRP.
+// Used to exclude resources and rank them by RSRP.
 struct SensingRecord {
     int      slot        = -1;
     int      subch_start = -1;
@@ -25,20 +25,13 @@ public:
 
     // Advance position by one slot. Wraps around at the end of the road
     // so UE density stays constant.
-    //
-    // TODO(v0.1): implement.
     void move(double slot_duration_ms, double road_length_m);
 
     // Does this UE have a packet to send in this slot?
     // With periodic CAM traffic, a packet is generated every packet_period_ms.
-    //
-    // TODO(v0.1): implement.
     bool hasPacketAt(int slot, const Config& cfg) const;
 
     // Pick the resource to transmit on.
-    // v0.1: uniformly random from all candidates in the selection window. DONE
-    // v0.3: hold the resource across several periods (SPS).
-    // v0.4: filter candidates using the sensing window before picking.
     Resource selectResource(int current_slot,
                             const ResourcePool& pool,
                             const Config& cfg,
@@ -50,17 +43,21 @@ public:
     int reservationPeriod() const { return reservation_period_; };
 
     // Record something this UE heard, for later use by sensing-based selection.
-    // TODO(v0.3)
     void addSensingRecord(const SensingRecord& rec, int current_slot, const Config& cfg);
 
-    int reselCounter() const { return resel_counter_; }
+    //Record the unmonitored slot (ue is transmitting)
+    void markUnmonitored(int slot, const Config& cfg);
+
+    int reselCounter() const { return resel_counter_; };
 
 private:
+
+    std::vector<Resource> channelSensing(int current_slot, const Config& cfg);
+
     int    id_;
     double position_m_;
     double speed_mps_;
 
-    // ---- SPS state (v0.3) ----
     // The grant this UE is currently holding. Its slot is advanced by one
     // reservation period after every transmission, so it always points at the
     // next slot this UE intends to use.
@@ -69,4 +66,5 @@ private:
     int      reservation_period_ = 0;
 
     std::vector<SensingRecord> sensing_history_;
+    std::vector<int> unmonitored_slot_;
 };

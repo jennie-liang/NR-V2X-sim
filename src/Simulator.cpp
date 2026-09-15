@@ -30,7 +30,6 @@ void Simulator::run() {
     std::cout << "=== NR-V2X Mode 2 Simulation ===\n"
               << "UEs                : " << cfg_.num_ues << "\n"
               << "Duration           : " << cfg_.sim_duration_ms << " ms\n"
-              << "Sensing            : " << (cfg_.enable_sensing ? "on" : "off") << "\n"
               << "SPS                : " << (cfg_.enable_sps ? "on" : "off") << "\n"
               << "--------------------------------\n"
               << "Transmissions      : " << metrics_.total_transmissions << "\n"
@@ -40,21 +39,6 @@ void Simulator::run() {
 }
 
 void Simulator::stepSlot(int slot) {
-    // TODO(v0.1)
-    //
-    // 1. Move every UE.
-    //
-    // 2. For each UE that hasPacketAt(slot):
-    //      Resource r = ue.selectResource(slot, pool_, cfg_, rng_);
-    //      if (r.valid()) tx_history_[r.slot].push_back(Transmission{...});
-    //    Note the resource is scheduled in a FUTURE slot, so it goes into
-    //    that slot's bucket, not this one.
-    //
-    // 3. Evaluate the transmissions actually happening in THIS slot:
-    //      detectCollisions(tx_history_[slot]);
-    //
-    // 4. Update metrics_.
-
     //Move UE
     for(auto &ue: ues_)
         ue.move(1, cfg_.road_length_m);
@@ -70,18 +54,43 @@ void Simulator::stepSlot(int slot) {
 
     //detect collision in this slot
     detectCollisions(tx_history_[slot]);
+
+    // Every UE that is NOT transmitting in this slot decodes the SCIs it can
+    // hear and records them. A UE transmitting in this slot hears nothing:
+    // sidelink is half-duplex, and that blind spot is a real limitation of
+    // the standard, not a modelling shortcut.
+
+    const auto& txs = tx_history_[slot];
+    for(auto& ue: ues_){
+        //if the ue is transmitting, then it can't receive SCI from other ues
+        bool transmitting = std::any_of(txs.begin(), txs.end(), 
+                                        [&](const Transmission& t){return t.ue_id == ue.id();});
+
+        if(transmitting) {
+            ue.markUnmonitored(slot, cfg_);
+            continue;
+        }
+
+        for(auto& tx: txs){
+            double distance = std::abs(ue.position()-tx.tx_pos_m);
+            double rsrp = Channel::rxPowerDbm(tx.tx_power_dbm, distance, cfg_);
+
+            //sensingRecord : slot, subch_start, num_subch, rsrp, period
+            SensingRecord sr = SensingRecord{slot, 
+                                            tx.resource.subchannel_start,
+                                            tx.resource.num_subchannels,
+                                            rsrp,
+                                            tx.reservation_period};
+            ue.addSensingRecord(sr, slot, cfg_);
+        }
+    }
+
+    
    
 }
 
 void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
-    // TODO(v0.1) SINR-based reception.
-    //   For each TX and each potential receiver within comm_range_m:
-    //     signal = Channel::rxPowerDbm(tx.tx_power_dbm, dist, cfg_)
-    //     interference = sum over all OTHER overlapping TX of their rx power
-    //                    (sum in mW, not dB)
-    //     sinr = signal - mwToDbm(interference_mw + noise_mw)
-    //     rx_success += (sinr > cfg_.sinr_threshold_db)
-
+    //SINR-based reception
     if(txs.size()==0) return;
 
     double signal, interference, sinr;
@@ -103,8 +112,6 @@ void Simulator::detectCollisions(const std::vector<Transmission>& txs) {
 
     // PRR
     for(auto &ue: ues_){
-        
-
         for(auto &tx: txs){
             interference = 0.0;
             signal = Channel::rxPowerDbm(tx.tx_power_dbm, std::abs(tx.tx_pos_m - ue.position()), cfg_);
@@ -151,14 +158,13 @@ void Simulator::writeCsv(const std::string& path) const {
     }
 
     if (need_header) {
-        out << "num_ues,duration_ms,seed,sensing,sps,packet_period_ms,"
+        out << "num_ues,duration_ms,seed,sps,packet_period_ms,"
                "transmissions,collisions,collision_rate,prr\n";
     }
 
     out << cfg_.num_ues << ','
         << cfg_.sim_duration_ms << ','
         << cfg_.seed << ','
-        << (cfg_.enable_sensing ? 1 : 0) << ','
         << (cfg_.enable_sps ? 1 : 0) << ','
         << cfg_.packet_period_ms << ','
         << metrics_.total_transmissions << ','

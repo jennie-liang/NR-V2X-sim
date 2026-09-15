@@ -46,8 +46,7 @@ struct Config {
     double speed_max_mps        = 30.0;   // ~108 km/h
 
     // ---- Feature switches (for A/B experiments) ----
-    bool   enable_sensing       = false;  // v0.1: false = pure random selection
-    bool   enable_sps           = false;  // v0.4
+    bool   enable_sps       = false;      //seneing + sps switch
 
     // ---- Output ----
     const char* output_csv      = "results/run.csv";

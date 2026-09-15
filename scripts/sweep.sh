@@ -8,7 +8,7 @@ OUT=results/sweep.csv
 
 UES=(10 20 30 40 50 60 80 100)
 SEEDS=(1 2 3 4 5)
-MODES=("" "--sps" "--sps --sensing")
+MODES=("" "--sps")
 
 rm -f "$OUT"
 mkdir -p results

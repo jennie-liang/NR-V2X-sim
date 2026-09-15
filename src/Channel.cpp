@@ -5,7 +5,6 @@
 namespace Channel {
 
 double pathlossDb(double distance_m, const Config& cfg) {
-    // TODO(v0.1)
     // PL = reference_loss_db + 10 * pathloss_exponent * log10(d)
     // Clamp d to at least 1.0 m.
     double PL = cfg.reference_loss_db + 10 * cfg.pathloss_exponent * log10(std::max(distance_m, 1.0));

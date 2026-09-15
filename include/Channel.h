@@ -7,9 +7,6 @@
 namespace Channel {
 
 // Log-distance pathloss in dB.
-// PL(d) = reference_loss_db + 10 * n * log10(d)
-//
-// TODO(v0.1): implement. Guard d < 1.0 to avoid log10(0).
 double pathlossDb(double distance_m, const Config& cfg);
 
 // Received power in dBm at `distance_m` from a transmitter at `tx_power_dbm`.

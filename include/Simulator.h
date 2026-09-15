@@ -37,17 +37,12 @@ public:
 
 private:
     // Main loop, one slot at a time.
-    // TODO(v0.1):
     //   1. move all UEs
     //   2. for each UE with a packet, selectResource() and record a Transmission
     //   3. detect collisions among this slot's transmissions
-    //   4. update metrics
     void stepSlot(int slot);
 
     // Any two transmissions overlapping in time+frequency collide.
-    // v0.1: pure overlap counts as a collision.
-    // v0.5: refine using SINR — a strong signal can survive a weak interferer.
-    // TODO(v0.1)
     void detectCollisions(const std::vector<Transmission>& txs);
 
     Config       cfg_;
@@ -56,7 +51,6 @@ private:
     std::mt19937 rng_;
     Metrics      metrics_;
 
-    // Transmission history, indexed by slot. Needed for sensing in v0.3;
-    // for v0.1 only the current slot matters.
+    // Transmission history, indexed by slot.
     std::vector<std::vector<Transmission>> tx_history_;
 };
